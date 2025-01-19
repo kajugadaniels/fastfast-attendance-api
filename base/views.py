@@ -21,3 +21,21 @@ class getUsers(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class addUser(APIView):
+    """
+    Create a new user.
+    """
+    def post(self, request, format=None):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            message = {"detail": "User created successfully."}
+            return Response({"data": serializer.data, "message": message}, status=status.HTTP_201_CREATED)
+        else:
+            # Serializer errors include details per field
+            message = {
+                "detail": "Error creating user. Please check the fields.",
+                "errors": serializer.errors
+            }
+            return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
