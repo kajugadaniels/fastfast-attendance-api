@@ -39,3 +39,26 @@ class addUser(APIView):
                 "errors": serializer.errors
             }
             return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+
+class showUser(APIView):
+    """
+    Retrieve detailed information about a specific user.
+    """
+    def get_object(self, id):
+        try:
+            return User.objects.get(id=id)
+        except User.DoesNotExist:
+            raise Http404(f"User with id {id} does not exist.")
+
+    def get(self, request, id, format=None):
+        try:
+            user = self.get_object(id)
+            serializer = UserSerializer(user)
+            message = {"detail": "User retrieved successfully."}
+            return Response({"data": serializer.data, "message": message}, status=status.HTTP_200_OK)
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {"detail": "An error occurred while retrieving the user.", "error": str(e)}
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
