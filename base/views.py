@@ -62,3 +62,61 @@ class showUser(APIView):
         except Exception as e:
             message = {"detail": "An error occurred while retrieving the user.", "error": str(e)}
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class editUser(APIView):
+    """
+    Update an existing user completely (PUT) or partially (PATCH).
+    """
+    def get_object(self, id):
+        try:
+            return User.objects.get(id=id)
+        except User.DoesNotExist:
+            raise Http404(f"User with id {id} does not exist.")
+
+    def put(self, request, id, format=None):
+        """
+        Handle complete update of a user.
+        """
+        try:
+            user = self.get_object(id)
+            serializer = UserSerializer(user, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                message = {"detail": "User updated successfully."}
+                return Response({"data": serializer.data, "message": message}, status=status.HTTP_200_OK)
+            else:
+                message = {
+                    "detail": "Error updating user. Please check the fields.",
+                    "errors": serializer.errors
+                }
+                return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {"detail": "An error occurred while updating the user.", "error": str(e)}
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def patch(self, request, id, format=None):
+        """
+        Handle partial update of a user.
+        """
+        try:
+            user = self.get_object(id)
+            serializer = UserSerializer(user, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                message = {"detail": "User updated successfully."}
+                return Response({"data": serializer.data, "message": message}, status=status.HTTP_200_OK)
+            else:
+                message = {
+                    "detail": "Error updating user. Please check the fields.",
+                    "errors": serializer.errors
+                }
+                return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {"detail": "An error occurred while updating the user.", "error": str(e)}
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
