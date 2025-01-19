@@ -32,7 +32,6 @@ class UserSerializer(serializers.ModelSerializer):
         if password:
             user.set_password(password)
         user.save()
-        user.assign_role_permissions()
 
         return user
 
@@ -52,10 +51,6 @@ class UserSerializer(serializers.ModelSerializer):
         if password:
             instance.set_password(password)
             instance.save()
-
-        # If the role has changed, update permissions
-        if old_role != instance.role:
-            instance.assign_role_permissions()
 
         # Update the remaining fields
         for attr, value in validated_data.items():
