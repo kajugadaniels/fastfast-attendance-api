@@ -243,7 +243,11 @@ class addEmployee(APIView):
 
 class showEmployee(APIView):
     """
-    Retrieve detailed information about a specific employee.
+    Retrieve detailed information about a specific employee, including:
+      - Basic employee info
+      - Full attendance history
+      - Total salary earned
+      - Recent activities (e.g., last 5 attendance records)
     """
     permission_classes = [IsAuthenticated]
 
@@ -256,10 +260,33 @@ class showEmployee(APIView):
     def get(self, request, id, format=None):
         try:
             employee = self.get_object(id)
-            serializer = EmployeeSerializer(employee)
-            message = {"detail": "Employee retrieved successfully."}
+
+            # Serialize employee basic info
+            employee_serializer = EmployeeSerializer(employee)
+
+            # Retrieve the entire attendance history for this employee
+            attendance_qs = Attendance.objects.filter(employee=employee).order_by('-time_in')
+
+            # Calculate total salary by summing salary
+            total_salary = sum(record.salary for record in attendance_qs)
+
+            # Full attendance history
+            attendance_serializer = AttendanceSerializer(attendance_qs, many=True)
+
+            # Recent activities (example: last 5 attendances)
+            recent_activities_qs = attendance_qs[:5]
+            recent_activities_serializer = AttendanceSerializer(recent_activities_qs, many=True)
+
+            data = {
+                "employee": employee_serializer.data,
+                "attendance_history": attendance_serializer.data,
+                "total_salary": str(total_salary),
+                "recent_activities": recent_activities_serializer.data
+            }
+
+            message = {"detail": "Employee retrieved successfully with full attendance details."}
             return Response(
-                {"data": serializer.data, "message": message},
+                {"data": data, "message": message},
                 status=status.HTTP_200_OK
             )
         except Http404 as e:
@@ -267,7 +294,7 @@ class showEmployee(APIView):
             return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             message = {
-                "detail": "An error occurred while retrieving the employee.",
+                "detail": "An error occurred while retrieving the employee details.",
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
