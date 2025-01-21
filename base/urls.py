@@ -20,9 +20,9 @@ urlpatterns = [
 
     path('attendance/', getAttendances.as_view(), name='getAttendances'),
     path('attendance/add/', addAttendance.as_view(), name='addAttendance'),
-    path('attendance/<int:id>/', showAttendance.as_view(), name='showAttendance'),
-    path('attendance/edit/<int:id>/', editAttendance.as_view(), name='editAttendance'),
-    path('attendance/delete/<int:id>/', deleteAttendance.as_view(), name='deleteAttendance'),
+    path('attendance/<id>/', showAttendance.as_view(), name='showAttendance'),
+    path('attendance/<id>/edit/', editAttendance.as_view(), name='editAttendance'),
+    path('attendance/<id>/delete/', deleteAttendance.as_view(), name='deleteAttendance'),
 ] 
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
