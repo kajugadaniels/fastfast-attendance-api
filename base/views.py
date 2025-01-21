@@ -271,3 +271,75 @@ class showEmployee(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class editEmployee(APIView):
+    """
+    Update an existing employee completely (PUT) or partially (PATCH).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, id):
+        try:
+            return Employee.objects.get(id=id)
+        except Employee.DoesNotExist:
+            raise Http404(f"Employee with id {id} does not exist.")
+
+    def put(self, request, id, format=None):
+        """
+        Handle complete update of an employee.
+        """
+        try:
+            employee = self.get_object(id)
+            serializer = EmployeeSerializer(employee, data=request.data)
+            if serializer.is_valid():
+                serializer.save()  # calls update() in EmployeeSerializer
+                message = {"detail": "Employee updated successfully (full update)."}
+                return Response(
+                    {"data": serializer.data, "message": message},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                message = {
+                    "detail": "Error updating employee. Please check the fields.",
+                    "errors": serializer.errors
+                }
+                return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {
+                "detail": "An unexpected error occurred while updating the employee.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def patch(self, request, id, format=None):
+        """
+        Handle partial update of an employee.
+        """
+        try:
+            employee = self.get_object(id)
+            serializer = EmployeeSerializer(employee, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()  # calls update() in EmployeeSerializer
+                message = {"detail": "Employee updated successfully (partial update)."}
+                return Response(
+                    {"data": serializer.data, "message": message},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                message = {
+                    "detail": "Error updating employee. Please check the fields.",
+                    "errors": serializer.errors
+                }
+                return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {
+                "detail": "An unexpected error occurred while updating the employee.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
