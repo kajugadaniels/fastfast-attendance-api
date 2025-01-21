@@ -371,3 +371,25 @@ class deleteEmployee(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class getAttendances(APIView):
+    """
+    Retrieve a list of all attendance records.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        try:
+            attendances = Attendance.objects.select_related('employee').all()
+            serializer = AttendanceSerializer(attendances, many=True)
+            message = {"detail": "Successfully retrieved all attendance records."}
+            return Response(
+                {"data": serializer.data, "message": message},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            message = {
+                "detail": "An error occurred while retrieving attendance records.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
