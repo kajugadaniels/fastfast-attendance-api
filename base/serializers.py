@@ -53,3 +53,33 @@ class EmployeeSerializer(serializers.ModelSerializer):
         instance.clean()
         instance.save()
         return instance
+
+class AttendanceSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Attendance model.
+    """
+    class Meta:
+        model = Attendance
+        fields = ['id', 'employee', 'finger_id', 'time_in', 'salary_snapshot']
+        read_only_fields = ['time_in']
+
+    def create(self, validated_data):
+        """
+        Override create to ensure the record is valid and
+        that the model-level clean() is called.
+        """
+        attendance = Attendance(**validated_data)
+        attendance.clean()
+        attendance.save()
+        return attendance
+
+    def update(self, instance, validated_data):
+        """
+        Override update to ensure the record is valid and
+        that the model-level clean() is called.
+        """
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.clean()
+        instance.save()
+        return instance
