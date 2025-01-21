@@ -240,3 +240,34 @@ class addEmployee(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class showEmployee(APIView):
+    """
+    Retrieve detailed information about a specific employee.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, id):
+        try:
+            return Employee.objects.get(id=id)
+        except Employee.DoesNotExist:
+            raise Http404(f"Employee with id {id} does not exist.")
+
+    def get(self, request, id, format=None):
+        try:
+            employee = self.get_object(id)
+            serializer = EmployeeSerializer(employee)
+            message = {"detail": "Employee retrieved successfully."}
+            return Response(
+                {"data": serializer.data, "message": message},
+                status=status.HTTP_200_OK
+            )
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {
+                "detail": "An error occurred while retrieving the employee.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
