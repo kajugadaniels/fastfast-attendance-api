@@ -478,31 +478,61 @@ class addAttendance(APIView):
 
 class showAttendance(APIView):
     """
-    Retrieve a specific attendance record by ID.
+    Retrieve detailed information about a single Employee's entire attendance history,
+    including the total amount of salary earned.
+    
+    NOTE: We interpret the 'id' in the URL as the 'employee_id' now, not attendance_id.
+          This allows a full history for that Employee.
     """
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, id):
+    def get_employee(self, id):
         try:
-            return Attendance.objects.get(id=id)
-        except Attendance.DoesNotExist:
-            raise Http404(f"Attendance record with id {id} does not exist.")
+            return Employee.objects.get(id=id)
+        except Employee.DoesNotExist:
+            raise Http404(f"Employee with ID {id} does not exist.")
 
     def get(self, request, id, format=None):
+        """
+        Returns:
+          - Employee basic info
+          - Full attendance history (present & absent)
+          - total_salary: sum of all salary across the Employee’s attendance
+        """
         try:
-            attendance = self.get_object(id)
-            serializer = AttendanceSerializer(attendance)
-            message = {"detail": "Attendance record retrieved successfully."}
+            employee = self.get_employee(id)
+            # Retrieve all attendance records for this employee
+            attendance_qs = Attendance.objects.filter(employee=employee).order_by('-time_in')
+            
+            # Calculate total salary by summing salary (Decimal sum).
+            total_salary = sum(record.salary for record in attendance_qs)
+
+            # We can serialize attendance records individually
+            attendance_serializer = AttendanceSerializer(attendance_qs, many=True)
+
+            # If you also want to show the employee's own details in the response:
+            employee_serializer = EmployeeSerializer(employee)
+
+            # Build a custom response structure
+            data = {
+                "employee": employee_serializer.data,
+                "attendance_history": attendance_serializer.data,
+                "total_salary": str(total_salary)
+            }
+
+            message = {"detail": "Successfully retrieved detailed attendance info."}
             return Response(
-                {"data": serializer.data, "message": message},
+                {"data": data, "message": message},
                 status=status.HTTP_200_OK
             )
         except Http404 as e:
+            # Employee not found
             message = {"detail": str(e)}
             return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            # Other unforeseen errors
             message = {
-                "detail": "An error occurred while retrieving the attendance record.",
+                "detail": "An error occurred while retrieving attendance information.",
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
