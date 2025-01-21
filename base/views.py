@@ -401,19 +401,43 @@ class deleteEmployee(APIView):
 
 class getAttendances(APIView):
     """
-    Retrieve a list of all attendance records, including
-    employee name, phone, and position for each record.
+    Retrieve a list of all employees, indicating whether each is
+    Present or Absent for today's date.
+
+    - We consider 'Present' if there's an Attendance record for that employee
+      with time_in__date == today.
+    - Otherwise, we consider 'Absent'.
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
         try:
-            attendances = Attendance.objects.select_related('employee').all()
-            serializer = AttendanceSerializer(attendances, many=True)
+            # 1) Get today's date
+            today = timezone.now().date()  # or date.today() if you prefer naive dates
 
-            message = {"detail": "Successfully retrieved all attendance records with employee details."}
+            # 2) Retrieve all employees
+            employees = Employee.objects.all()
+
+            # 3) Build a results list with each employee's attendance status
+            results = []
+            for emp in employees:
+                # Check if there's an Attendance record for 'today'
+                has_attendance_today = Attendance.objects.filter(
+                    employee=emp,
+                    time_in__date=today
+                ).exists()
+
+                results.append({
+                    "employee_id": emp.id,
+                    "name": emp.name,
+                    "phone": emp.phone,
+                    "position": emp.position,
+                    "attendance_status": "Present" if has_attendance_today else "Absent",
+                })
+
+            message = {"detail": "Successfully retrieved all employees with today's attendance status."}
             return Response(
-                {"data": serializer.data, "message": message},
+                {"data": results, "message": message},
                 status=status.HTTP_200_OK
             )
         except Exception as e:
