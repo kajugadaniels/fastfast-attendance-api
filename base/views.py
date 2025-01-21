@@ -431,6 +431,7 @@ class getAttendances(APIView):
                     "employee_id": emp.id,
                     "name": emp.name,
                     "phone": emp.phone,
+                    "gender": emp.gender,
                     "position": emp.position,
                     "salary": emp.salary,
                     "attendance_status": "Present" if has_attendance_today else "Absent",
