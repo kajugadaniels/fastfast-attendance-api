@@ -569,3 +569,31 @@ class editAttendance(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class deleteAttendance(APIView):
+    """
+    Delete a specific attendance record by ID.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, id):
+        try:
+            return Attendance.objects.get(id=id)
+        except Attendance.DoesNotExist:
+            raise Http404(f"Attendance record with id {id} does not exist.")
+
+    def delete(self, request, id, format=None):
+        try:
+            attendance = self.get_object(id)
+            attendance.delete()
+            message = {"detail": "Attendance record deleted successfully."}
+            return Response({"message": message}, status=status.HTTP_200_OK)
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {
+                "detail": "An unexpected error occurred while deleting the attendance record.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
