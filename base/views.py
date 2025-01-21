@@ -189,3 +189,25 @@ class deleteUser(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class getEmployees(APIView):
+    """
+    Retrieve a list of all employees.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        try:
+            employees = Employee.objects.all()
+            serializer = EmployeeSerializer(employees, many=True)
+            message = {"detail": "Successfully retrieved all employees."}
+            return Response(
+                {"data": serializer.data, "message": message},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            message = {
+                "detail": "An error occurred while retrieving employees.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
