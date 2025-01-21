@@ -374,7 +374,8 @@ class deleteEmployee(APIView):
 
 class getAttendances(APIView):
     """
-    Retrieve a list of all attendance records.
+    Retrieve a list of all attendance records, including
+    employee name, phone, and position for each record.
     """
     permission_classes = [IsAuthenticated]
 
@@ -382,7 +383,8 @@ class getAttendances(APIView):
         try:
             attendances = Attendance.objects.select_related('employee').all()
             serializer = AttendanceSerializer(attendances, many=True)
-            message = {"detail": "Successfully retrieved all attendance records."}
+
+            message = {"detail": "Successfully retrieved all attendance records with employee details."}
             return Response(
                 {"data": serializer.data, "message": message},
                 status=status.HTTP_200_OK
