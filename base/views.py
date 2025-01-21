@@ -211,3 +211,32 @@ class getEmployees(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class addEmployee(APIView):
+    """
+    Create a new employee.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        try:
+            serializer = EmployeeSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()  # calls create() in EmployeeSerializer
+                message = {"detail": "Employee created successfully."}
+                return Response(
+                    {"data": serializer.data, "message": message},
+                    status=status.HTTP_201_CREATED
+                )
+            else:
+                message = {
+                    "detail": "Error creating employee. Please check the fields.",
+                    "errors": serializer.errors
+                }
+                return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            message = {
+                "detail": "An unexpected error occurred while creating the employee.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
