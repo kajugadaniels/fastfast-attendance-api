@@ -57,16 +57,16 @@ class EmployeeSerializer(serializers.ModelSerializer):
 class AttendanceSerializer(serializers.ModelSerializer):
     """
     Serializer for Attendance model.
+    Includes 'attended' to indicate presence/absence.
     """
     class Meta:
         model = Attendance
-        fields = ['id', 'employee', 'finger_id', 'time_in', 'salary']
+        fields = ['id', 'employee', 'finger_id', 'time_in', 'salary', 'attended']
         read_only_fields = ['time_in']
 
     def create(self, validated_data):
         """
-        Override create to ensure the record is valid and
-        that the model-level clean() is called.
+        Override create to ensure model-level clean is called.
         """
         attendance = Attendance(**validated_data)
         attendance.clean()
@@ -75,8 +75,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """
-        Override update to ensure the record is valid and
-        that the model-level clean() is called.
+        Override update to ensure model-level clean is called.
         """
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
