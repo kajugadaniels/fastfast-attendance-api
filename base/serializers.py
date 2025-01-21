@@ -60,7 +60,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Attendance
-        fields = ['id', 'employee', 'finger_id', 'time_in', 'salary_snapshot']
+        fields = ['id', 'employee', 'finger_id', 'time_in', 'salary']
         read_only_fields = ['time_in']
 
     def create(self, validated_data):

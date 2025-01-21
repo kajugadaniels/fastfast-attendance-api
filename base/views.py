@@ -440,7 +440,7 @@ class addAttendance(APIView):
             data = {
                 "employee": employee.id,
                 "finger_id": finger_id,
-                "salary_snapshot": str(employee.salary),  # must be string for DecimalField
+                "salary": str(employee.salary),
             }
 
             serializer = AttendanceSerializer(data=data)
