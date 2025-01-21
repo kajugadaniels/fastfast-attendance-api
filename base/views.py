@@ -393,3 +393,74 @@ class getAttendances(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class addAttendance(APIView):
+    """
+    Create a new attendance record for an employee based on finger_id.
+    Enforces the 12-hour rule:
+      - If the employee last tapped within 12 hours, raise an error.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        try:
+            finger_id = request.data.get('finger_id', None)
+            if not finger_id:
+                return Response({
+                    "message": {
+                        "detail": "finger_id is required to record attendance."
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Retrieve employee via the provided finger_id
+            try:
+                employee = Employee.objects.get(finger_id=finger_id)
+            except Employee.DoesNotExist:
+                return Response({
+                    "message": {
+                        "detail": f"No employee found with finger_id={finger_id}"
+                    }
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Check if the last attendance was within 12 hours
+            last_attendance = Attendance.objects.filter(employee=employee).order_by('-time_in').first()
+            if last_attendance:
+                time_diff = timezone.now() - last_attendance.time_in
+                if time_diff < timedelta(hours=12):
+                    return Response({
+                        "message": {
+                            "detail": (
+                                f"You have already tapped in the last 12 hours. "
+                                f"Please wait at least {12 - time_diff.seconds//3600} more hour(s)."
+                            )
+                        }
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Build data for AttendanceSerializer:
+            data = {
+                "employee": employee.id,
+                "finger_id": finger_id,
+                "salary_snapshot": str(employee.salary),  # must be string for DecimalField
+            }
+
+            serializer = AttendanceSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                message = {"detail": "Attendance recorded successfully."}
+                return Response(
+                    {"data": serializer.data, "message": message},
+                    status=status.HTTP_201_CREATED
+                )
+            else:
+                message = {
+                    "detail": "Error creating attendance. Please check the fields.",
+                    "errors": serializer.errors
+                }
+                return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            message = {
+                "detail": "An unexpected error occurred while creating the attendance record.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
