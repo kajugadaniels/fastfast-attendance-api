@@ -343,3 +343,31 @@ class editEmployee(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class deleteEmployee(APIView):
+    """
+    Delete a specific employee.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, id):
+        try:
+            return Employee.objects.get(id=id)
+        except Employee.DoesNotExist:
+            raise Http404(f"Employee with id {id} does not exist.")
+
+    def delete(self, request, id, format=None):
+        try:
+            employee = self.get_object(id)
+            employee.delete()
+            message = {"detail": "Employee deleted successfully."}
+            return Response({"message": message}, status=status.HTTP_200_OK)
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {
+                "detail": "An unexpected error occurred while deleting the employee.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
