@@ -9,7 +9,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        exclude = ""
+        exclude = ['created_at', 'updated_at']
         fields = '__all__'
 
     def validate_phone(self, value):
@@ -40,7 +40,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         Create an Employee instance, ensuring model-level clean() is called.
         """
         employee = Employee(**validated_data)
-        employee.clean()  # Explicitly call clean() to raise ValidationError if needed
+        employee.clean()
         employee.save()
         return employee
 
@@ -50,6 +50,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
         """
         for attr, val in validated_data.items():
             setattr(instance, attr, val)
-        instance.clean()  # Explicitly call clean() to raise ValidationError if needed
+        instance.clean()
         instance.save()
         return instance
