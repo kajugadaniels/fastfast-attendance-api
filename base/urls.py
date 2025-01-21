@@ -17,6 +17,12 @@ urlpatterns = [
     path('employee/<id>/', showEmployee.as_view(), name='showEmployee'),
     path('employee/<id>/edit/', editEmployee.as_view(), name='editEmployee'),
     path('employee/<id>/delete/', deleteEmployee.as_view(), name='deleteEmployee'),
+
+    path('attendance/', getAttendances.as_view(), name='getAttendances'),
+    path('attendance/add/', addAttendance.as_view(), name='addAttendance'),
+    path('attendance/<id>/', showAttendance.as_view(), name='showAttendance'),
+    path('attendance/<id>/edit/', editAttendance.as_view(), name='editAttendance'),
+    path('attendance/<id>/delete/', deleteAttendance.as_view(), name='deleteAttendance'),
 ] 
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
