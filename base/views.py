@@ -397,15 +397,17 @@ class getAttendances(APIView):
 class addAttendance(APIView):
     """
     Create a new attendance record for an employee based on finger_id.
-    Enforces the 12-hour rule:
-      - If the employee last tapped within 12 hours, raise an error.
+    Enforces the 12-hour rule for consecutive taps.
+    Adds logic for 'attended' boolean to track presence/absence.
     """
     permission_classes = [IsAuthenticated]
 
     def post(self, request, format=None):
         try:
-            finger_id = request.data.get('finger_id', None)
-            if not finger_id:
+            finger_id = request.data.get('finger_id')
+            attended = request.data.get('attended', True)
+
+            if finger_id is None:
                 return Response({
                     "message": {
                         "detail": "finger_id is required to record attendance."
@@ -431,22 +433,31 @@ class addAttendance(APIView):
                         "message": {
                             "detail": (
                                 f"You have already tapped in the last 12 hours. "
-                                f"Please wait at least {12 - time_diff.seconds//3600} more hour(s)."
+                                f"Please wait at least {(12 - time_diff.seconds//3600)} more hour(s)."
                             )
                         }
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Build data for AttendanceSerializer:
+            # If attended=False, then salary = 0
+            # If attended=True, use employee.salary
+            salary = employee.salary if attended else 0
+
             data = {
                 "employee": employee.id,
-                "finger_id": finger_id,
-                "salary": str(employee.salary),
+                "finger_id": employee.finger_id,
+                "attended": attended,
+                "salary": str(salary)
             }
 
             serializer = AttendanceSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
-                message = {"detail": "Attendance recorded successfully."}
+                message = {
+                    "detail": (
+                        "Attendance recorded successfully. "
+                        f"{'Present' if attended else 'Absent'} for {employee.name}."
+                    )
+                }
                 return Response(
                     {"data": serializer.data, "message": message},
                     status=status.HTTP_201_CREATED
