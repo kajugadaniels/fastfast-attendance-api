@@ -432,6 +432,7 @@ class getAttendances(APIView):
                     "name": emp.name,
                     "phone": emp.phone,
                     "position": emp.position,
+                    "salary": emp.salary,
                     "attendance_status": "Present" if has_attendance_today else "Absent",
                 })
 
