@@ -161,3 +161,31 @@ class editUser(APIView):
                 "error": str(e)
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class deleteUser(APIView):
+    """
+    Delete a specific user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, id):
+        try:
+            return User.objects.get(id=id)
+        except User.DoesNotExist:
+            raise Http404(f"User with id {id} does not exist.")
+
+    def delete(self, request, id, format=None):
+        try:
+            user = self.get_object(id)
+            user.delete()
+            message = {"detail": "User deleted successfully."}
+            return Response({"message": message}, status=status.HTTP_200_OK)
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {
+                "detail": "An unexpected error occurred while deleting the user.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
