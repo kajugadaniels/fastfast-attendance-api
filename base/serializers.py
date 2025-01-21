@@ -55,28 +55,22 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return instance
 
 class AttendanceSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Attendance model.
-    Includes 'attended' to indicate presence/absence.
-    """
+    employee_name = serializers.CharField(source='employee.name', read_only=True)
+    employee_phone = serializers.CharField(source='employee.phone', read_only=True)
+    employee_position = serializers.CharField(source='employee.position', read_only=True)
+
     class Meta:
         model = Attendance
-        fields = ['id', 'employee', 'finger_id', 'time_in', 'salary', 'attended']
+        fields = ['id', 'employee', 'employee_name', 'employee_phone', 'employee_position', 'finger_id', 'time_in', 'salary', 'attended']
         read_only_fields = ['time_in']
-
+    
     def create(self, validated_data):
-        """
-        Override create to ensure model-level clean is called.
-        """
         attendance = Attendance(**validated_data)
         attendance.clean()
         attendance.save()
         return attendance
 
     def update(self, instance, validated_data):
-        """
-        Override update to ensure model-level clean is called.
-        """
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.clean()
