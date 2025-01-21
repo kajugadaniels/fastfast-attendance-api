@@ -37,3 +37,33 @@ class Employee(models.Model):
         # finger_id is PositiveIntegerField, so Django already ensures >= 1.
         # But if you want more constraints (e.g., a max limit), you could add them here.
         super().clean()
+
+class Attendance(models.Model):
+    """
+    Model representing an attendance record for an Employee.
+    Stores the employee, finger_id for quick reference,
+    the time of tapping (time_in), and the salary snapshot.
+    """
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name='attendance_records'
+    )
+    finger_id = models.PositiveIntegerField()
+    time_in = models.DateTimeField(auto_now_add=True)
+    salary = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        ordering = ['-time_in']
+
+    def __str__(self):
+        return f"Attendance record: {self.employee.name} at {self.time_in}"
+
+    def clean(self):
+        """
+        Additional validation to ensure the finger_id matches the assigned Employee,
+        if your business logic requires it. (Optional)
+        """
+        if self.finger_id != self.employee.finger_id:
+            raise ValidationError("finger_id does not match the Employee's finger_id.")
+        super().clean()

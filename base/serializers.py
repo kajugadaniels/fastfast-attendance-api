@@ -9,7 +9,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Employee
-        exclude = ['created_at', 'updated_at']
+        excluded = ['created_at', 'updated_at']
         fields = '__all__'
 
     def validate_phone(self, value):
