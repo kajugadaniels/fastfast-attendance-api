@@ -6,7 +6,7 @@ from account.serializers import *
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 class getUsers(APIView):
     """
@@ -455,7 +455,7 @@ class addAttendance(APIView):
     Enforces the 12-hour rule for consecutive taps.
     Adds logic for 'attended' boolean to track presence/absence.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request, format=None):
         try:
