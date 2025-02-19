@@ -249,7 +249,7 @@ class showEmployee(APIView):
       - Total salary earned
       - Recent activities (e.g., last 5 attendance records)
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_object(self, id):
         try:
