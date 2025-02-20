@@ -20,16 +20,14 @@ class Command(BaseCommand):
             gender = random.choice(['M', 'F', 'O'])
             position = 'Construction'
             salary = random.randint(1000, 9999)  # Random salary between 1000 and 9999
-            finger_id = i
 
-            # Create Employee
+            # Create Employee (finger_id will be auto-generated)
             Employee.objects.create(
                 name=name,
                 phone=phone,
                 gender=gender,
                 position=position,
                 salary=salary,
-                finger_id=finger_id,
             )
 
         self.stdout.write(self.style.SUCCESS('Successfully created 300 fake employees'))
