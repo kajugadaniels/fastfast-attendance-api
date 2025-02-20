@@ -1,8 +1,11 @@
 import os
+import random
 from django.db import models
 from django.utils import timezone
+from django.dispatch import receiver
 from django.utils.text import slugify
 from imagekit.processors import ResizeToFill
+from django.db.models.signals import pre_save
 from imagekit.models import ProcessedImageField
 from django.core.exceptions import ValidationError
 
@@ -53,6 +56,21 @@ class Employee(models.Model):
         # finger_id is PositiveIntegerField, so Django already ensures >= 1.
         # But if you want more constraints (e.g., a max limit), you could add them here.
         super().clean()
+
+# Signal to automatically generate finger_id before saving an Employee
+@receiver(pre_save, sender=Employee)
+def generate_finger_id(sender, instance, **kwargs):
+    """
+    Auto-generate the `finger_id` for a new Employee before saving.
+    Ensure the `finger_id` is unique and has a length of 5 digits.
+    """
+    if instance.finger_id is None:
+        while True:
+            # Generate a random 5-digit number (ensuring uniqueness)
+            finger_id = random.randint(10000, 99999)
+            if not Employee.objects.filter(finger_id=finger_id).exists():
+                instance.finger_id = finger_id
+                break
 
 class Attendance(models.Model):
     """
