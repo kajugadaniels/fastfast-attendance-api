@@ -416,7 +416,7 @@ class getAttendances(APIView):
             today = timezone.now().date()  # or date.today() if you prefer naive dates
 
             # 2) Retrieve all employees
-            employees = Employee.objects.all()
+            employees = Employee.objects.all().order_by('-id')
 
             # 3) Build a results list with each employee's attendance status
             results = []
