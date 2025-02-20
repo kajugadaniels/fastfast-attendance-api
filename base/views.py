@@ -198,7 +198,7 @@ class getEmployees(APIView):
 
     def get(self, request, format=None):
         try:
-            employees = Employee.objects.all()
+            employees = Employee.objects.all().order_by('-created_at')
             serializer = EmployeeSerializer(employees, many=True)
             message = {"detail": "Successfully retrieved all employees."}
             return Response(
