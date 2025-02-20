@@ -261,8 +261,8 @@ class showEmployee(APIView):
         try:
             employee = self.get_object(id)
 
-            # Serialize employee basic info
-            employee_serializer = EmployeeSerializer(employee)
+            # Serialize employee basic info and include the request context
+            employee_serializer = EmployeeSerializer(employee, context={'request': request})
 
             # Retrieve the entire attendance history for this employee
             attendance_qs = Attendance.objects.filter(employee=employee).order_by('-time_in')

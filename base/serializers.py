@@ -7,8 +7,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
     A more 'professional' EmployeeSerializer with custom validations.
     """
 
-    image_url = serializers.SerializerMethodField()
-
     class Meta:
         model = Employee
         excluded = ['created_at', 'updated_at']
