@@ -1,6 +1,14 @@
+import os
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
+from imagekit.processors import ResizeToFill
+from imagekit.models import ProcessedImageField
 from django.core.exceptions import ValidationError
+
+def employee_image_path(instance, filename):
+    base_filename, file_extension = os.path.splitext(filename)
+    return f'employee/profile/employee_{slugify(instance.name)}_{instance.phone}_{instance.finger_id}{file_extension}'
 
 class Employee(models.Model):
     GENDER_CHOICES = [
@@ -15,6 +23,14 @@ class Employee(models.Model):
     position = models.CharField(max_length=50, null=True, blank=True)
     salary = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     finger_id = models.PositiveIntegerField(unique=True, null=True, blank=True)
+    image = ProcessedImageField(
+        upload_to=employee_image_path,
+        processors=[ResizeToFill(1270, 1270)],
+        format='JPEG',
+        options={'quality': 90},
+        null=True,
+        blank=True
+    )
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
