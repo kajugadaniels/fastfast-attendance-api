@@ -7,10 +7,21 @@ class EmployeeSerializer(serializers.ModelSerializer):
     A more 'professional' EmployeeSerializer with custom validations.
     """
 
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Employee
         excluded = ['created_at', 'updated_at']
         fields = '__all__'
+
+    def get_image_url(self, obj):
+        """
+        Build the absolute URL for the image field.
+        """
+        request = self.context.get('request')
+        if request is not None and obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return None
 
     def validate_phone(self, value):
         """
