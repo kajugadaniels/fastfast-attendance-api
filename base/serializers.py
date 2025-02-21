@@ -76,12 +76,15 @@ class AttendanceSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(source='employee.name', read_only=True)
     employee_phone = serializers.CharField(source='employee.phone', read_only=True)
     employee_position = serializers.CharField(source='employee.position', read_only=True)
+    food_menu_name = serializers.CharField(source='food_menu.name', read_only=True)
+    food_menu_finger_id = serializers.CharField(source='food_menu.finger_id', read_only=True)
+    food_menu_price = serializers.DecimalField(source='food_menu.price', read_only=True)
 
     class Meta:
         model = Attendance
-        fields = ['id', 'employee', 'employee_name', 'employee_phone', 'employee_position', 'finger_id', 'time_in', 'salary', 'attended']
-        read_only_fields = ['time_in']
-    
+        fields = ['id', 'employee', 'employee_name', 'employee_phone', 'employee_position', 'finger_id', 'time_in', 'salary', 'attended', 'food_menu', 'food_menu_name', 'food_menu_price']
+        read_only_fields = ['time_in', 'food_menu_name', 'food_menu_price']
+
     def create(self, validated_data):
         attendance = Attendance(**validated_data)
         attendance.clean()
