@@ -20,12 +20,12 @@ urlpatterns = [
 
     path('food-menus/', GetFoodMenus.as_view(), name='getFoodMenus'),
     path('food-menu/add/', AddFoodMenu.as_view(), name='addFoodMenu'),
+    path('food-menu/<int:id>/', ShowFoodMenu.as_view(), name='showFoodMenu'),
     path('food-menu/<int:id>/edit/', EditFoodMenu.as_view(), name='editFoodMenu'),
     path('food-menu/<int:id>/delete/', DeleteFoodMenu.as_view(), name='deleteFoodMenu'),
 
     path('attendance/', getAttendances.as_view(), name='getAttendances'),
     path('attendance/add/', addAttendance.as_view(), name='addAttendance'),
-    path('food-menu/<int:id>/', ShowFoodMenu.as_view(), name='showFoodMenu'),
     path('attendance/<id>/', showAttendance.as_view(), name='showAttendance'),
     path('attendance/<id>/edit/', editAttendance.as_view(), name='editAttendance'),
     path('attendance/<id>/delete/', deleteAttendance.as_view(), name='deleteAttendance'),
