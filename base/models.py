@@ -85,6 +85,7 @@ class Attendance(models.Model):
     )
     finger_id = models.PositiveIntegerField()
     time_in = models.DateTimeField(auto_now_add=True)
+    attendance_date = models.DateField(default=timezone.now)
     salary = models.DecimalField(max_digits=10, decimal_places=2)
     attended = models.BooleanField(default=True)
 
@@ -106,3 +107,8 @@ class Attendance(models.Model):
         if not self.attended and self.salary != 0:
             raise ValidationError("If 'attended' is False, salary must be 0.")
         super().clean()
+
+    def save(self, *args, **kwargs):
+        # Automatically set the attendance_date to the date part of time_in when saving
+        self.attendance_date = self.time_in.date()
+        super().save(*args, **kwargs)

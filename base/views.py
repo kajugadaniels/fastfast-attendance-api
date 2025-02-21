@@ -1,6 +1,7 @@
 from base.models import *
 from account.models import *
 from base.serializers import *
+from django.db.models import Q
 from django.http import Http404
 from account.serializers import *
 from rest_framework import status
@@ -403,17 +404,13 @@ class getAttendances(APIView):
     """
     Retrieve a list of all employees, indicating whether each is
     Present or Absent for today's date.
-
-    - We consider 'Present' if there's an Attendance record for that employee
-      with time_in__date == today.
-    - Otherwise, we consider 'Absent'.
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
         try:
-            # 1) Get today's date
-            today = timezone.now().date()  # or date.today() if you prefer naive dates
+            # 1) Get today's date (midnight)
+            today = timezone.now().date()  # Date without time
 
             # 2) Retrieve all employees
             employees = Employee.objects.all().order_by('-id')
@@ -421,12 +418,13 @@ class getAttendances(APIView):
             # 3) Build a results list with each employee's attendance status
             results = []
             for emp in employees:
-                # Check if there's an Attendance record for 'today'
+                # 4) Check if there's an Attendance record for 'today'
                 has_attendance_today = Attendance.objects.filter(
                     employee=emp,
                     time_in__date=today
                 ).exists()
 
+                # Add attendance status to the employee data
                 results.append({
                     "employee_id": emp.id,
                     "name": emp.name,
