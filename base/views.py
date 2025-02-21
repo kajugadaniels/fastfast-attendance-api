@@ -438,6 +438,21 @@ class EditFoodMenu(APIView):
             return Response({"data": serializer.data, "message": "Food item updated successfully."}, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+class DeleteFoodMenu(APIView):
+    """
+    Delete a specific food menu item.
+    """
+    def get_object(self, id):
+        try:
+            return FoodMenu.objects.get(id=id)
+        except FoodMenu.DoesNotExist:
+            raise Http404(f"Food item with id {id} does not exist.")
+
+    def delete(self, request, id, format=None):
+        menu = self.get_object(id)
+        menu.delete()
+        return Response({"message": "Food item deleted successfully."}, status=status.HTTP_200_OK)
+
 class getAttendances(APIView):
     """
     Retrieve a list of all employees, indicating whether each is
