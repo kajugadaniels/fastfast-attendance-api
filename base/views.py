@@ -400,6 +400,15 @@ class deleteEmployee(APIView):
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class GetFoodMenus(APIView):
+    """
+    Retrieve a list of all food menus.
+    """
+    def get(self, request, format=None):
+        menus = FoodMenu.objects.all()
+        serializer = FoodMenuSerializer(menus, many=True)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+
 class getAttendances(APIView):
     """
     Retrieve a list of all employees, indicating whether each is
