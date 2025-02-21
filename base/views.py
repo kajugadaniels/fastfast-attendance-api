@@ -528,6 +528,7 @@ class addAttendance(APIView):
     Create a new attendance record for an employee based on finger_id.
     Enforces the 12-hour rule for consecutive taps.
     Adds logic for 'attended' boolean to track presence/absence.
+    Now includes food_menu selection for calculating salary.
     """
     permission_classes = [AllowAny]
 
@@ -535,6 +536,7 @@ class addAttendance(APIView):
         try:
             finger_id = request.data.get('finger_id')
             attended = request.data.get('attended', True)
+            food_menu_id = request.data.get('food_menu')
 
             if finger_id is None:
                 return Response({
@@ -553,6 +555,19 @@ class addAttendance(APIView):
                     }
                 }, status=status.HTTP_404_NOT_FOUND)
 
+            # Retrieve food menu item
+            if food_menu_id:
+                try:
+                    food_menu = FoodMenu.objects.get(id=food_menu_id)
+                except FoodMenu.DoesNotExist:
+                    return Response({
+                        "message": {
+                            "detail": f"No food item found with id={food_menu_id}"
+                        }
+                    }, status=status.HTTP_404_NOT_FOUND)
+            else:
+                food_menu = None
+
             # Check if the last attendance was within 12 hours
             last_attendance = Attendance.objects.filter(employee=employee).order_by('-time_in').first()
             if last_attendance:
@@ -568,13 +583,13 @@ class addAttendance(APIView):
                     }, status=status.HTTP_400_BAD_REQUEST)
 
             # If attended=False, then salary = 0
-            # If attended=True, use employee.salary
-            salary = employee.salary if attended else 0
+            salary = food_menu.price if attended and food_menu else 0
 
             data = {
                 "employee": employee.id,
                 "finger_id": employee.finger_id,
                 "attended": attended,
+                "food_menu": food_menu.id if food_menu else None,
                 "salary": str(salary)
             }
 
