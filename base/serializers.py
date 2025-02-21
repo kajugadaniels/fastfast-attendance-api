@@ -76,7 +76,6 @@ class AttendanceSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(source='employee.name', read_only=True)
     employee_phone = serializers.CharField(source='employee.phone', read_only=True)
     employee_position = serializers.CharField(source='employee.position', read_only=True)
-    employee_finger_id = serializers.CharField(source='employee.finger_id', read_only=True)
     food_menu_name = serializers.CharField(source='food_menu.name', read_only=True)
     food_menu_price = serializers.DecimalField(source='food_menu.price', read_only=True, max_digits=10, decimal_places=2)
 
