@@ -421,7 +421,7 @@ class getAttendances(APIView):
                 # 4) Check if there's an Attendance record for 'today'
                 has_attendance_today = Attendance.objects.filter(
                     employee=emp,
-                    time_in__date=today
+                    attendance_date=today
                 ).exists()
 
                 # Add attendance status to the employee data
