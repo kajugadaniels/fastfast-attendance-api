@@ -89,7 +89,7 @@ if str(os.getenv("NODE_ENV"))=="production":
             'USER': os.getenv("POSTGRES_USER"),
             'PASSWORD': os.getenv("POSTGRES_PASSWORD"),
             'HOST': os.getenv("PGHOST"),
-            'PORT':os.getenv("PGPORT"), 
+            'PORT':os.getenv("PGPORT"),
             'OPTIONS': {
                 'sslmode': 'require',
             }            

@@ -404,6 +404,8 @@ class GetFoodMenus(APIView):
     """
     Retrieve a list of all food menus.
     """
+    permission_classes = [AllowAny]
+
     def get(self, request, format=None):
         menus = FoodMenu.objects.all()
         serializer = FoodMenuSerializer(menus, many=True)
