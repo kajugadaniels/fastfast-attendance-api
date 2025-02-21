@@ -453,6 +453,14 @@ class EditFoodMenu(APIView):
             return Response({"data": serializer.data, "message": "Food item updated successfully."}, status=status.HTTP_200_OK)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+    def patch(self, request, id, format=None):
+        menu = self.get_object(id)
+        serializer = FoodMenuSerializer(menu, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"data": serializer.data, "message": "Food item updated successfully (partial)."}, status=status.HTTP_200_OK)
+        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 class DeleteFoodMenu(APIView):
     """
     Delete a specific food menu item.
