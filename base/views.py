@@ -409,6 +409,17 @@ class GetFoodMenus(APIView):
         serializer = FoodMenuSerializer(menus, many=True)
         return Response({"data": serializer.data}, status=status.HTTP_200_OK)
 
+class AddFoodMenu(APIView):
+    """
+    Create a new food menu item.
+    """
+    def post(self, request, format=None):
+        serializer = FoodMenuSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"data": serializer.data, "message": "Food item created successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 class getAttendances(APIView):
     """
     Retrieve a list of all employees, indicating whether each is
