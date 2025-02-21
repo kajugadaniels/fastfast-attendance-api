@@ -109,6 +109,10 @@ class Attendance(models.Model):
         super().clean()
 
     def save(self, *args, **kwargs):
-        # Automatically set the attendance_date to the date part of time_in when saving
-        self.attendance_date = self.time_in.date()
+        """
+        Ensure that the attendance_date is set properly.
+        """
+        if not self.attendance_date:
+            # Automatically set the attendance_date to the date part of time_in when saving
+            self.attendance_date = self.time_in.date()
         super().save(*args, **kwargs)
