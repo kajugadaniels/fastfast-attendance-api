@@ -63,6 +63,15 @@ class EmployeeSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+class FoodMenuSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the FoodMenu model to validate and serialize data.
+    """
+    class Meta:
+        model = FoodMenu
+        fields = ['id', 'name', 'price']
+
+
 class AttendanceSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(source='employee.name', read_only=True)
     employee_phone = serializers.CharField(source='employee.phone', read_only=True)
