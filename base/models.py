@@ -88,17 +88,24 @@ class Attendance(models.Model):
     """
     Model representing an attendance record for an Employee.
     If 'attended' is False, the employee is marked absent
-    and 'salary' will be 0.
+    and 'salary' will be 0, otherwise salary is based on the selected FoodMenu price.
     """
     employee = models.ForeignKey(
         Employee,
         on_delete=models.CASCADE,
         related_name='attendance_records'
     )
+    food_menu = models.ForeignKey(
+        FoodMenu,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='attendance_records'
+    )
     finger_id = models.PositiveIntegerField()
     time_in = models.DateTimeField(auto_now_add=True)
     attendance_date = models.DateField(default=timezone.now)
-    salary = models.DecimalField(max_digits=10, decimal_places=2)
+    salary = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     attended = models.BooleanField(default=True)
 
     class Meta:
@@ -118,13 +125,21 @@ class Attendance(models.Model):
         # If not attended, salary is expected to be 0
         if not self.attended and self.salary != 0:
             raise ValidationError("If 'attended' is False, salary must be 0.")
+
+        if self.attended and not self.food_menu:
+            raise ValidationError("Food menu selection is required when the employee attends.")
+        
+        if self.food_menu and self.salary != self.food_menu.price:
+            raise ValidationError("Salary should be equal to the price of the selected food menu.")
+        
         super().clean()
 
     def save(self, *args, **kwargs):
         """
-        Ensure that the attendance_date is set properly.
+        Ensure that the attendance_date is set properly and salary is calculated from FoodMenu price.
         """
-        if not self.attendance_date:
-            # Automatically set the attendance_date to the date part of time_in when saving
-            self.attendance_date = self.time_in.date()
+        if self.attended and self.food_menu:
+            self.salary = self.food_menu.price
+        elif not self.attended:
+            self.salary = 0
         super().save(*args, **kwargs)
