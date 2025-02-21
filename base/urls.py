@@ -18,6 +18,11 @@ urlpatterns = [
     path('employee/<id>/edit/', editEmployee.as_view(), name='editEmployee'),
     path('employee/<id>/delete/', deleteEmployee.as_view(), name='deleteEmployee'),
 
+    path('food-menus/', GetFoodMenus.as_view(), name='getFoodMenus'),
+    path('food-menu/add/', AddFoodMenu.as_view(), name='addFoodMenu'),
+    path('food-menu/<int:id>/edit/', EditFoodMenu.as_view(), name='editFoodMenu'),
+    path('food-menu/<int:id>/delete/', DeleteFoodMenu.as_view(), name='deleteFoodMenu'),
+
     path('attendance/', getAttendances.as_view(), name='getAttendances'),
     path('attendance/add/', addAttendance.as_view(), name='addAttendance'),
     path('attendance/<id>/', showAttendance.as_view(), name='showAttendance'),
