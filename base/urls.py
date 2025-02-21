@@ -25,6 +25,7 @@ urlpatterns = [
 
     path('attendance/', getAttendances.as_view(), name='getAttendances'),
     path('attendance/add/', addAttendance.as_view(), name='addAttendance'),
+    path('food-menu/<int:id>/', ShowFoodMenu.as_view(), name='showFoodMenu'),
     path('attendance/<id>/', showAttendance.as_view(), name='showAttendance'),
     path('attendance/<id>/edit/', editAttendance.as_view(), name='editAttendance'),
     path('attendance/<id>/delete/', deleteAttendance.as_view(), name='deleteAttendance'),
