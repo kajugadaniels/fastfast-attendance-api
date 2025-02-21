@@ -420,6 +420,21 @@ class AddFoodMenu(APIView):
             return Response({"data": serializer.data, "message": "Food item created successfully."}, status=status.HTTP_201_CREATED)
         return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+class ShowFoodMenu(APIView):
+    """
+    Retrieve a single food menu item by its ID.
+    """
+    def get_object(self, id):
+        try:
+            return FoodMenu.objects.get(id=id)
+        except FoodMenu.DoesNotExist:
+            raise Http404(f"Food item with id {id} does not exist.")
+
+    def get(self, request, id, format=None):
+        menu = self.get_object(id)
+        serializer = FoodMenuSerializer(menu)
+        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+
 class EditFoodMenu(APIView):
     """
     Update an existing food menu item.
