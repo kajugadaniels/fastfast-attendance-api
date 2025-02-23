@@ -467,8 +467,16 @@ class AddFoodMenu(APIView):
 
 class ShowFoodMenu(APIView):
     """
-    Retrieve a single food menu item by its ID.
+    Retrieve a single food menu item by its ID along with the list of employees
+    who have attended with this food menu. For each employee, return basic info and
+    their attendance history (only records that reference this food menu), where each
+    record includes:
+      - attendance_date (formatted as "YYYY-MM-DD"),
+      - time (formatted as "YYYY-MM-DD HH:MM:SS", or null if unavailable),
+      - attendance_status ("Present" if attended is True, "Absent" otherwise).
     """
+    permission_classes = [AllowAny]
+
     def get_object(self, id):
         try:
             return FoodMenu.objects.get(id=id)
@@ -476,9 +484,58 @@ class ShowFoodMenu(APIView):
             raise Http404(f"Food item with id {id} does not exist.")
 
     def get(self, request, id, format=None):
-        menu = self.get_object(id)
-        serializer = FoodMenuSerializer(menu)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+        try:
+            # Retrieve the specified food menu
+            menu = self.get_object(id)
+            menu_serializer = FoodMenuSerializer(menu, context={'request': request})
+
+            # Retrieve all attendance records associated with this food menu,
+            # ordered by descending time_in.
+            attendance_qs = Attendance.objects.filter(food_menu=menu).order_by('-time_in')
+
+            # Group attendance records by employee
+            employees_dict = {}
+            for record in attendance_qs:
+                emp = record.employee
+                if emp.id not in employees_dict:
+                    employees_dict[emp.id] = {
+                        "employee_id": emp.id,
+                        "name": emp.name,
+                        "phone": emp.phone,
+                        "gender": emp.gender,
+                        "position": emp.position,
+                        "attendance_history": []
+                    }
+                record_status = "Present" if record.attended else "Absent"
+                record_time = record.time_in.strftime('%Y-%m-%d %H:%M:%S') if record.time_in else None
+                employees_dict[emp.id]["attendance_history"].append({
+                    "attendance_date": record.attendance_date.strftime('%Y-%m-%d'),
+                    "time": record_time,
+                    "attendance_status": record_status,
+                })
+
+            # Convert grouped results to a list
+            employees_list = list(employees_dict.values())
+
+            data = {
+                "food_menu": menu_serializer.data,
+                "employees": employees_list
+            }
+
+            message = {
+                "detail": "Food menu retrieved successfully along with assigned employee attendance history."
+            }
+            return Response({"data": data, "message": message}, status=status.HTTP_200_OK)
+
+        except Http404 as e:
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            message = {
+                "detail": "An error occurred while retrieving the food menu details.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class EditFoodMenu(APIView):
     """
