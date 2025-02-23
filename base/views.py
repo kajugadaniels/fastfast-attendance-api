@@ -245,16 +245,18 @@ class addEmployee(APIView):
 class showEmployee(APIView):
     """
     Retrieve detailed information about a specific employee, including:
-      - Basic employee information.
-      - Comprehensive attendance history. Each attendance record includes:
-          - attendance_date: formatted as "YYYY-MM-DD".
-          - time: formatted as "YYYY-MM-DD HH:MM:SS" (or null if unavailable).
-          - attendance_status: "Present" if attended, "Absent" otherwise.
-          - food_menu: an array containing an object with the food menu's name and price (or empty if none).
-      - Total salary earned (aggregated from attendance records).
-      - Recent activities (the last five attendance records in the same format).
+      - Basic employee info.
+      - Full attendance history: each record includes:
+            - attendance_date (formatted as "YYYY-MM-DD"),
+            - time (formatted as "YYYY-MM-DD HH:MM:SS", or null if unavailable),
+            - attendance_status ("Present" if attended is True, "Absent" otherwise),
+            - food_menu: an array containing one object with the food menu's name and price if available,
+              or an empty array if not.
+      - Total earnings computed as the sum of the food menu prices for all attended records.
+      - Recent activities (e.g., the last 5 attendance records).
     
-    This highly professional endpoint provides a complete view of the employee's attendance.
+    Note: The legacy salary field and related functionality have been removed. All earnings
+    are now derived solely from the associated food menu price.
     """
     permission_classes = [AllowAny]
 
@@ -266,54 +268,80 @@ class showEmployee(APIView):
 
     def get(self, request, id, format=None):
         try:
-            # Retrieve the employee object and serialize basic info.
             employee = self.get_object(id)
+            # Serialize basic employee info.
             employee_serializer = EmployeeSerializer(employee, context={'request': request})
-
-            # Retrieve full attendance history (ordered by descending time_in).
+            
+            # Retrieve the complete attendance history for the employee,
+            # ordered by descending time_in.
             attendance_qs = Attendance.objects.filter(employee=employee).order_by('-time_in')
-
-            # Build the custom attendance history list.
+            
+            # Compute total earnings using the food_menu price for attended records.
+            total_earnings = sum(
+                record.food_menu.price 
+                for record in attendance_qs 
+                if record.attended and record.food_menu
+            )
+            
+            # Build the full attendance history array.
             attendance_history = []
             for record in attendance_qs:
-                history_item = {
+                record_status = "Present" if record.attended else "Absent"
+                record_time = record.time_in.strftime('%Y-%m-%d %H:%M:%S') if record.time_in else None
+                # Prepare food_menu details as an array.
+                if record.food_menu:
+                    food_menu_data = [{
+                        "name": record.food_menu.name,
+                        "price": str(record.food_menu.price)
+                    }]
+                else:
+                    food_menu_data = []
+                attendance_history.append({
                     "attendance_date": record.attendance_date.strftime('%Y-%m-%d'),
-                    "time": record.time_in.strftime('%Y-%m-%d %H:%M:%S') if record.time_in else None,
-                    "attendance_status": "Present" if record.attended else "Absent",
-                    "food_menu": (
-                        [{
-                            "name": record.food_menu.name,
-                            "price": str(record.food_menu.price)
-                        }] if record.food_menu else []
-                    )
-                }
-                attendance_history.append(history_item)
-
-            # Calculate the total salary earned.
-            total_salary = sum(record.salary or 0 for record in attendance_qs)
-
-            # Recent activities: last 5 attendance records.
-            recent_activities = attendance_history[:5]
-
+                    "time": record_time,
+                    "attendance_status": record_status,
+                    "food_menu": food_menu_data,
+                })
+            
+            # Extract recent activities (last 5 records).
+            recent_activities_qs = attendance_qs[:5]
+            recent_activities = []
+            for record in recent_activities_qs:
+                record_status = "Present" if record.attended else "Absent"
+                record_time = record.time_in.strftime('%Y-%m-%d %H:%M:%S') if record.time_in else None
+                if record.food_menu:
+                    food_menu_data = [{
+                        "name": record.food_menu.name,
+                        "price": str(record.food_menu.price)
+                    }]
+                else:
+                    food_menu_data = []
+                recent_activities.append({
+                    "attendance_date": record.attendance_date.strftime('%Y-%m-%d'),
+                    "time": record_time,
+                    "attendance_status": record_status,
+                    "food_menu": food_menu_data,
+                })
+            
             data = {
                 "employee": employee_serializer.data,
                 "attendance_history": attendance_history,
-                "total_salary": str(total_salary),
+                "total_earnings": str(total_earnings),
                 "recent_activities": recent_activities
             }
-
-            message = {"detail": "Employee retrieved successfully with full attendance details."}
+            
+            message = {"detail": "Employee retrieved successfully with complete attendance details."}
             return Response({"data": data, "message": message}, status=status.HTTP_200_OK)
+        
         except Http404 as e:
-            return Response({"message": {"detail": str(e)}}, status=status.HTTP_404_NOT_FOUND)
+            message = {"detail": str(e)}
+            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response(
-                {"message": {
-                    "detail": "An error occurred while retrieving the employee details.",
-                    "error": str(e)
-                }},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            message = {
+                "detail": "An error occurred while retrieving the employee details.",
+                "error": str(e)
+            }
+            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class editEmployee(APIView):
     """
