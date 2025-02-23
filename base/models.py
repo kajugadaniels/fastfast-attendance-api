@@ -105,7 +105,6 @@ class Attendance(models.Model):
     finger_id = models.PositiveIntegerField()
     time_in = models.DateTimeField(auto_now_add=True)
     attendance_date = models.DateField(default=timezone.now)
-    salary = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     attended = models.BooleanField(default=True)
 
     class Meta:
@@ -129,17 +128,17 @@ class Attendance(models.Model):
         if self.attended and not self.food_menu:
             raise ValidationError("Food menu selection is required when the employee attends.")
         
-        if self.food_menu and self.salary != self.food_menu.price:
-            raise ValidationError("Salary should be equal to the price of the selected food menu.")
+        # if self.food_menu and self.salary != self.food_menu.price:
+        #     raise ValidationError("Salary should be equal to the price of the selected food menu.")
         
         super().clean()
 
-    def save(self, *args, **kwargs):
-        """
-        Ensure that the attendance_date is set properly and salary is calculated from FoodMenu price.
-        """
-        if self.attended and self.food_menu:
-            self.salary = self.food_menu.price
-        elif not self.attended:
-            self.salary = 0
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     """
+    #     Ensure that the attendance_date is set properly and salary is calculated from FoodMenu price.
+    #     """
+    #     if self.attended and self.food_menu:
+    #         self.salary = self.food_menu.price
+    #     elif not self.attended:
+    #         self.salary = 0
+    #     super().save(*args, **kwargs)
