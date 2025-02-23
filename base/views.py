@@ -245,10 +245,16 @@ class addEmployee(APIView):
 class showEmployee(APIView):
     """
     Retrieve detailed information about a specific employee, including:
-      - Basic employee info
-      - Full attendance history
-      - Total salary earned
-      - Recent activities (e.g., last 5 attendance records)
+      - Basic employee information.
+      - Comprehensive attendance history. Each attendance record includes:
+          - attendance_date: formatted as "YYYY-MM-DD".
+          - time: formatted as "YYYY-MM-DD HH:MM:SS" (or null if unavailable).
+          - attendance_status: "Present" if attended, "Absent" otherwise.
+          - food_menu: an array containing an object with the food menu's name and price (or empty if none).
+      - Total salary earned (aggregated from attendance records).
+      - Recent activities (the last five attendance records in the same format).
+    
+    This highly professional endpoint provides a complete view of the employee's attendance.
     """
     permission_classes = [AllowAny]
 
@@ -260,45 +266,54 @@ class showEmployee(APIView):
 
     def get(self, request, id, format=None):
         try:
+            # Retrieve the employee object and serialize basic info.
             employee = self.get_object(id)
-
-            # Serialize employee basic info and include the request context
             employee_serializer = EmployeeSerializer(employee, context={'request': request})
 
-            # Retrieve the entire attendance history for this employee
+            # Retrieve full attendance history (ordered by descending time_in).
             attendance_qs = Attendance.objects.filter(employee=employee).order_by('-time_in')
 
-            # Calculate total salary by summing salary
-            total_salary = sum(record.salary for record in attendance_qs)
+            # Build the custom attendance history list.
+            attendance_history = []
+            for record in attendance_qs:
+                history_item = {
+                    "attendance_date": record.attendance_date.strftime('%Y-%m-%d'),
+                    "time": record.time_in.strftime('%Y-%m-%d %H:%M:%S') if record.time_in else None,
+                    "attendance_status": "Present" if record.attended else "Absent",
+                    "food_menu": (
+                        [{
+                            "name": record.food_menu.name,
+                            "price": str(record.food_menu.price)
+                        }] if record.food_menu else []
+                    )
+                }
+                attendance_history.append(history_item)
 
-            # Full attendance history
-            attendance_serializer = AttendanceSerializer(attendance_qs, many=True)
+            # Calculate the total salary earned.
+            total_salary = sum(record.salary or 0 for record in attendance_qs)
 
-            # Recent activities (example: last 5 attendances)
-            recent_activities_qs = attendance_qs[:5]
-            recent_activities_serializer = AttendanceSerializer(recent_activities_qs, many=True)
+            # Recent activities: last 5 attendance records.
+            recent_activities = attendance_history[:5]
 
             data = {
                 "employee": employee_serializer.data,
-                "attendance_history": attendance_serializer.data,
+                "attendance_history": attendance_history,
                 "total_salary": str(total_salary),
-                "recent_activities": recent_activities_serializer.data
+                "recent_activities": recent_activities
             }
 
             message = {"detail": "Employee retrieved successfully with full attendance details."}
-            return Response(
-                {"data": data, "message": message},
-                status=status.HTTP_200_OK
-            )
+            return Response({"data": data, "message": message}, status=status.HTTP_200_OK)
         except Http404 as e:
-            message = {"detail": str(e)}
-            return Response({"message": message}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": {"detail": str(e)}}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            message = {
-                "detail": "An error occurred while retrieving the employee details.",
-                "error": str(e)
-            }
-            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"message": {
+                    "detail": "An error occurred while retrieving the employee details.",
+                    "error": str(e)
+                }},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class editEmployee(APIView):
     """
