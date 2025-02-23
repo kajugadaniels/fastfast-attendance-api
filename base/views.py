@@ -477,36 +477,57 @@ class DeleteFoodMenu(APIView):
         menu = self.get_object(id)
         menu.delete()
         return Response({"message": "Food item deleted successfully."}, status=status.HTTP_200_OK)
-
 class getAttendances(APIView):
     """
-    Retrieve a list of all employees, indicating whether each is
-    Present or Absent for today's date, and include the time_in
-    for those who attended (null otherwise).
+    Retrieve a list of all employees with today's attendance status,
+    including the time_in for those who attended and the complete past
+    attendance history. Each past record includes the attendance date,
+    time_in, attendance status, and food menu details (name and price).
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
         try:
-            # 1) Get today's date (midnight)
+            # Get today's date (without time)
             today = timezone.now().date()
 
-            # 2) Retrieve all employees
+            # Retrieve all employees ordered by descending id
             employees = Employee.objects.all().order_by('-id')
-
-            # 3) Build a results list with each employee's attendance status and time_in
             results = []
+
             for emp in employees:
+                # Retrieve today's attendance record (if any)
                 attendance_record = Attendance.objects.filter(
                     employee=emp,
                     attendance_date=today
                 ).first()
                 if attendance_record:
-                    attendance_status = "Present"
+                    today_status = "Present"
                     time_in = attendance_record.time_in.strftime('%Y-%m-%d %H:%M:%S')
                 else:
-                    attendance_status = "Absent"
+                    today_status = "Absent"
                     time_in = None
+
+                # Retrieve past attendance history (all records except today's)
+                history_records = Attendance.objects.filter(employee=emp).exclude(attendance_date=today).order_by('-attendance_date')
+                history_list = []
+                for record in history_records:
+                    record_status = "Present" if record.attended else "Absent"
+                    record_time_in = record.time_in.strftime('%Y-%m-%d %H:%M:%S') if record.time_in else None
+                    # Include food menu details if available
+                    if record.food_menu:
+                        food_menu_data = {
+                            "name": record.food_menu.name,
+                            "price": str(record.food_menu.price)
+                        }
+                    else:
+                        food_menu_data = None
+                    history_list.append({
+                        "attendance_date": record.attendance_date.strftime('%Y-%m-%d'),
+                        "time_in": record_time_in,
+                        "attendance_status": record_status,
+                        "food_menu": food_menu_data
+                    })
 
                 results.append({
                     "employee_id": emp.id,
@@ -515,12 +536,13 @@ class getAttendances(APIView):
                     "gender": emp.gender,
                     "position": emp.position,
                     "salary": emp.salary,
-                    "attendance_status": attendance_status,
-                    "time_in": time_in
+                    "attendance_status": today_status,
+                    "time_in": time_in,
+                    "attendance_history": history_list
                 })
 
             message = {
-                "detail": "Successfully retrieved all employees with today's attendance status and time_in."
+                "detail": "Successfully retrieved all employees with today's attendance and complete past history."
             }
             return Response(
                 {"data": results, "message": message},
