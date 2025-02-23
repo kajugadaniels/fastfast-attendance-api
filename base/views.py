@@ -481,28 +481,33 @@ class DeleteFoodMenu(APIView):
 class getAttendances(APIView):
     """
     Retrieve a list of all employees, indicating whether each is
-    Present or Absent for today's date.
+    Present or Absent for today's date, and include the time_in
+    for those who attended (null otherwise).
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
         try:
             # 1) Get today's date (midnight)
-            today = timezone.now().date()  # Date without time
+            today = timezone.now().date()
 
             # 2) Retrieve all employees
             employees = Employee.objects.all().order_by('-id')
 
-            # 3) Build a results list with each employee's attendance status
+            # 3) Build a results list with each employee's attendance status and time_in
             results = []
             for emp in employees:
-                # 4) Check if there's an Attendance record for 'today'
-                has_attendance_today = Attendance.objects.filter(
+                attendance_record = Attendance.objects.filter(
                     employee=emp,
                     attendance_date=today
-                ).exists()
+                ).first()
+                if attendance_record:
+                    attendance_status = "Present"
+                    time_in = attendance_record.time_in.strftime('%Y-%m-%d %H:%M:%S')
+                else:
+                    attendance_status = "Absent"
+                    time_in = None
 
-                # Add attendance status to the employee data
                 results.append({
                     "employee_id": emp.id,
                     "name": emp.name,
@@ -510,10 +515,13 @@ class getAttendances(APIView):
                     "gender": emp.gender,
                     "position": emp.position,
                     "salary": emp.salary,
-                    "attendance_status": "Present" if has_attendance_today else "Absent",
+                    "attendance_status": attendance_status,
+                    "time_in": time_in
                 })
 
-            message = {"detail": "Successfully retrieved all employees with today's attendance status."}
+            message = {
+                "detail": "Successfully retrieved all employees with today's attendance status and time_in."
+            }
             return Response(
                 {"data": results, "message": message},
                 status=status.HTTP_200_OK
