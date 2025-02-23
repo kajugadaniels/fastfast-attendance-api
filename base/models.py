@@ -45,8 +45,8 @@ class Employee(models.Model):
         Perform additional model-level validations.
         """
         # Ensure salary is not negative
-        if self.salary < 0:
-            raise ValidationError("Salary cannot be negative.")
+        # if self.salary < 0:
+        #     raise ValidationError("Salary cannot be negative.")
         
         # Example check if phone is numeric (allowing + sign). 
         # Adjust your regex/condition for your needs.

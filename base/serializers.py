@@ -34,10 +34,10 @@ class EmployeeSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def validate_salary(self, value):
-        if value < 0:
-            raise serializers.ValidationError("Salary cannot be negative.")
-        return value
+    # def validate_salary(self, value):
+    #     if value < 0:
+    #         raise serializers.ValidationError("Salary cannot be negative.")
+    #     return value
 
     def validate_finger_id(self, value):
         if value <= 0:
@@ -81,7 +81,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Attendance
-        fields = ['id', 'employee', 'employee_name', 'employee_phone', 'employee_position', 'finger_id', 'time_in', 'salary', 'attended', 'food_menu', 'food_menu_name', 'food_menu_price']
+        fields = ['id', 'employee', 'employee_name', 'employee_phone', 'employee_position', 'finger_id', 'time_in', 'attended', 'food_menu', 'food_menu_name', 'food_menu_price']
         read_only_fields = ['time_in', 'food_menu_name', 'food_menu_price']
 
     def create(self, validated_data):
