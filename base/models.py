@@ -20,6 +20,11 @@ class Employee(models.Model):
         ('O', 'Other'),
     ]
 
+    STATUS_CHOICES = (
+        (True, "Active"),
+        (False, "Not Active"),
+    )
+
     name = models.CharField(max_length=100, null=True, blank=True)
     phone = models.CharField(max_length=15, unique=True, null=True, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, default='O')
@@ -34,6 +39,7 @@ class Employee(models.Model):
         null=True,
         blank=True
     )
+    status = models.BooleanField(default=False, choices=STATUS_CHOICES)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
