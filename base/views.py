@@ -653,9 +653,9 @@ class getAttendances(APIView):
 class addAttendance(APIView):
     """
     Create a new attendance record for an employee based on finger_id.
-    Enforces the 12-hour rule for consecutive taps.
-    Adds logic for 'attended' boolean to track presence/absence.
-    Now includes food_menu selection for calculating salary.
+    Enforces the rule that an employee can record attendance only two times in 24 hours.
+    The second attendance must occur at least 3 hours after the first attendance.
+    Includes food_menu selection for calculating salary.
     """
     permission_classes = [AllowAny]
 
@@ -682,7 +682,7 @@ class addAttendance(APIView):
                     }
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            # Retrieve food menu item
+            # Retrieve food menu item if provided
             if food_menu_id:
                 try:
                     food_menu = FoodMenu.objects.get(id=food_menu_id)
@@ -695,21 +695,33 @@ class addAttendance(APIView):
             else:
                 food_menu = None
 
-            # Check if the last attendance was within 12 hours
-            last_attendance = Attendance.objects.filter(employee=employee).order_by('-time_in').first()
-            if last_attendance:
-                time_diff = timezone.now() - last_attendance.time_in
-                if time_diff < timedelta(hours=12):
+            # New rule: Allow only two attendance records in 24 hours;
+            # if one record exists, the second must occur at least 3 hours after the first.
+            recent_attendances = Attendance.objects.filter(
+                employee=employee,
+                time_in__gte=timezone.now() - timedelta(hours=24)
+            ).order_by('time_in')
+
+            if recent_attendances.count() >= 2:
+                return Response({
+                    "message": {
+                        "detail": "You have already recorded attendance twice in the last 24 hours."
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if recent_attendances.count() == 1:
+                first_attendance = recent_attendances.first()
+                time_diff = timezone.now() - first_attendance.time_in
+                if time_diff < timedelta(hours=3):
+                    remaining = timedelta(hours=3) - time_diff
+                    remaining_hours = int(remaining.total_seconds() // 3600) or 1
                     return Response({
                         "message": {
-                            "detail": (
-                                f"You have already tapped in the last 12 hours. "
-                                f"Please wait at least {(12 - time_diff.seconds//3600)} more hour(s)."
-                            )
+                            "detail": f"Please wait at least {remaining_hours} more hour(s) before recording your second attendance."
                         }
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-            # If attended=False, then salary = 0
+            # If attended=False then salary = 0; otherwise if attended and food_menu provided, use food_menu.price
             salary = food_menu.price if attended and food_menu else 0
 
             data = {
