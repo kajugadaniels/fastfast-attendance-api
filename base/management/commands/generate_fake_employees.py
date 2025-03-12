@@ -18,8 +18,8 @@ class Command(BaseCommand):
             phone = fake.phone_number()
             phone = ''.join(filter(str.isdigit, phone))[:10]  # Ensure the phone number is 10 digits long
             gender = random.choice(['M', 'F', 'O'])
-            position = 'Construction'
-            salary = random.randint(1000, 9999)  # Random salary between 1000 and 9999
+            # 70% chance for "Casual", 30% chance for "Staff"
+            position = random.choices(['Casual', 'Staff'], weights=[0.7, 0.3], k=1)[0]
 
             # Create Employee (finger_id will be auto-generated)
             Employee.objects.create(
@@ -27,7 +27,6 @@ class Command(BaseCommand):
                 phone=phone,
                 gender=gender,
                 position=position,
-                salary=salary,
             )
 
         self.stdout.write(self.style.SUCCESS('Successfully created 300 fake employees'))
