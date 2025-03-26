@@ -704,7 +704,7 @@ class addAttendance(APIView):
             if recent_attendances.count() >= 5:
                 return Response({
                     "message": {
-                        "detail": "You have already recorded attendance twice in the last 24 hours."
+                        "detail": "You have already recorded attendance 5 times in the last 24 hours."
                     }
                 }, status=status.HTTP_400_BAD_REQUEST)
 
