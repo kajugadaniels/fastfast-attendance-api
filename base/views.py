@@ -649,7 +649,6 @@ class getAttendances(APIView):
             }
             return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class addAttendance(APIView):
     """
     Create a new attendance record for an employee based on finger_id.
@@ -702,7 +701,7 @@ class addAttendance(APIView):
                 time_in__gte=timezone.now() - timedelta(hours=24)
             ).order_by('time_in')
 
-            if recent_attendances.count() >= 2:
+            if recent_attendances.count() >= 5:
                 return Response({
                     "message": {
                         "detail": "You have already recorded attendance twice in the last 24 hours."
@@ -712,12 +711,13 @@ class addAttendance(APIView):
             if recent_attendances.count() == 1:
                 first_attendance = recent_attendances.first()
                 time_diff = timezone.now() - first_attendance.time_in
-                if time_diff < timedelta(hours=3):
-                    remaining = timedelta(hours=3) - time_diff
-                    remaining_hours = int(remaining.total_seconds() // 3600) or 1
+                # Enforce a 2-minute interval between attendance records
+                if time_diff < timedelta(minutes=2):
+                    remaining = timedelta(minutes=2) - time_diff
+                    remaining_seconds = int(remaining.total_seconds()) or 1
                     return Response({
                         "message": {
-                            "detail": f"Please wait at least {remaining_hours} more hour(s) before recording your second attendance."
+                            "detail": f"Please wait at least {remaining_seconds} more second(s) before recording your second attendance."
                         }
                     }, status=status.HTTP_400_BAD_REQUEST)
 
