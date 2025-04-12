@@ -712,8 +712,8 @@ class addAttendance(APIView):
                 first_attendance = recent_attendances.first()
                 time_diff = timezone.now() - first_attendance.time_in
                 # Enforce a 2-minute interval between attendance records
-                if time_diff < timedelta(minutes=2):
-                    remaining = timedelta(minutes=2) - time_diff
+                if time_diff < timedelta(minutes=1):
+                    remaining = timedelta(minutes=1) - time_diff
                     remaining_seconds = int(remaining.total_seconds()) or 1
                     return Response({
                         "message": {
