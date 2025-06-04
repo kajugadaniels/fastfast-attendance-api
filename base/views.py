@@ -652,8 +652,7 @@ class getAttendances(APIView):
 class addAttendance(APIView):
     """
     Create a new attendance record for an employee based on finger_id.
-    Enforces the rule that an employee can record attendance only two times in 24 hours.
-    The second attendance must occur at least 3 hours after the first attendance.
+    The employee can now record attendance as many times as needed per day.
     Includes food_menu selection for calculating salary.
     """
     permission_classes = [AllowAny]
@@ -664,64 +663,36 @@ class addAttendance(APIView):
             attended = request.data.get('attended', True)
             food_menu_id = request.data.get('food_menu')
 
-            if finger_id is None:
+            if not finger_id:
                 return Response({
                     "message": {
                         "detail": "finger_id is required to record attendance."
                     }
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Retrieve employee via the provided finger_id
+            # Get the employee by finger_id
             try:
                 employee = Employee.objects.get(finger_id=finger_id)
             except Employee.DoesNotExist:
                 return Response({
                     "message": {
-                        "detail": f"No employee found with finger_id={finger_id}"
+                        "detail": f"No employee found with finger_id={finger_id}."
                     }
                 }, status=status.HTTP_404_NOT_FOUND)
 
-            # Retrieve food menu item if provided
+            # Get the food menu if applicable
+            food_menu = None
             if food_menu_id:
                 try:
                     food_menu = FoodMenu.objects.get(id=food_menu_id)
                 except FoodMenu.DoesNotExist:
                     return Response({
                         "message": {
-                            "detail": f"No food item found with id={food_menu_id}"
+                            "detail": f"Food menu with id={food_menu_id} not found."
                         }
                     }, status=status.HTTP_404_NOT_FOUND)
-            else:
-                food_menu = None
 
-            # New rule: Allow only two attendance records in 24 hours;
-            # if one record exists, the second must occur at least 3 hours after the first.
-            recent_attendances = Attendance.objects.filter(
-                employee=employee,
-                time_in__gte=timezone.now() - timedelta(hours=24)
-            ).order_by('time_in')
-
-            if recent_attendances.count() >= 5:
-                return Response({
-                    "message": {
-                        "detail": "You have already recorded attendance 5 times in the last 24 hours."
-                    }
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            if recent_attendances.count() == 1:
-                first_attendance = recent_attendances.first()
-                time_diff = timezone.now() - first_attendance.time_in
-                # Enforce a 2-minute interval between attendance records
-                if time_diff < timedelta(minutes=1):
-                    remaining = timedelta(minutes=1) - time_diff
-                    remaining_seconds = int(remaining.total_seconds()) or 1
-                    return Response({
-                        "message": {
-                            "detail": f"Please wait at least {remaining_seconds} more second(s) before recording your second attendance."
-                        }
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-            # If attended=False then salary = 0; otherwise if attended and food_menu provided, use food_menu.price
+            # Determine salary
             salary = food_menu.price if attended and food_menu else 0
 
             data = {
@@ -735,29 +706,27 @@ class addAttendance(APIView):
             serializer = AttendanceSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
-                message = {
-                    "detail": (
-                        "Attendance recorded successfully. "
-                        f"{'Present' if attended else 'Absent'} for {employee.name}."
-                    )
-                }
-                return Response(
-                    {"data": serializer.data, "message": message},
-                    status=status.HTTP_201_CREATED
-                )
+                return Response({
+                    "data": serializer.data,
+                    "message": {
+                        "detail": f"Attendance recorded successfully for {employee.name}."
+                    }
+                }, status=status.HTTP_201_CREATED)
             else:
-                message = {
-                    "detail": "Error creating attendance. Please check the fields.",
-                    "errors": serializer.errors
-                }
-                return Response({"message": message}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({
+                    "message": {
+                        "detail": "Validation error during attendance submission.",
+                        "errors": serializer.errors
+                    }
+                }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            message = {
-                "detail": "An unexpected error occurred while creating the attendance record.",
-                "error": str(e)
-            }
-            return Response({"message": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({
+                "message": {
+                    "detail": "Unexpected error occurred while recording attendance.",
+                    "error": str(e)
+                }
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class showAttendance(APIView):
     """
