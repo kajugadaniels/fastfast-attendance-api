@@ -80,27 +80,27 @@ WSGI_APPLICATION = 'api.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# DATABASES =  {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': os.getenv("MYSQL_DB", "fastfast"),
-#         'USER': os.getenv("MYSQL_USER", "remote_user"),
-#         'PASSWORD': os.getenv("MYSQL_PASSWORD", "6MfkKK#rriG#c"),
-#         'HOST': os.getenv("MYSQL_HOST", "vmi2421856.contaboserver.net"),
-#         'PORT': os.getenv("MYSQL_PORT", "3306"),
-#     }
-# }
-
 DATABASES =  {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv("MYSQL_DB", ""),
-        'USER': os.getenv("MYSQL_USER", ""),
-        'PASSWORD': os.getenv("MYSQL_PASSWORD", ""),
-        'HOST': os.getenv("MYSQL_HOST", ""),
-        'PORT': os.getenv("MYSQL_PORT", ""),
+        'NAME': os.getenv("MYSQL_DB", "fastfast"),
+        'USER': os.getenv("MYSQL_USER", "remote_user"),
+        'PASSWORD': os.getenv("MYSQL_PASSWORD", "6MfkKK#rriG#c"),
+        'HOST': os.getenv("MYSQL_HOST", "vmi2421856.contaboserver.net"),
+        'PORT': os.getenv("MYSQL_PORT", "3306"),
     }
 }
+
+# DATABASES =  {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': os.getenv("MYSQL_DB", ""),
+#         'USER': os.getenv("MYSQL_USER", ""),
+#         'PASSWORD': os.getenv("MYSQL_PASSWORD", ""),
+#         'HOST': os.getenv("MYSQL_HOST", ""),
+#         'PORT': os.getenv("MYSQL_PORT", ""),
+#     }
+# }
 
 
 # Password validation
